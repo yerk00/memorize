@@ -3,12 +3,14 @@ import { InsightRowCard } from '@/components/cards/InsightRowCard';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppScreen } from '@/components/common/AppScreen';
 import { SectionTitle } from '@/components/common/SectionTitle';
+import { useAuth } from '@/features/auth/auth-context';
 import { getHomeHeroText, getRecommendedBook } from '@/features/progress/helpers';
 import { getReviewOverview } from '@/features/progress/storage';
 import { ReviewOverview } from '@/features/progress/types';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -18,7 +20,13 @@ const quickActions = [
   { label: 'Quiz', icon: 'help-circle-outline' as const, color: colors.yellowSoft },
 ];
 
+function getDisplayName(name: string | null | undefined) {
+  if (!name) return 'amiga';
+  return name.trim().split(/\s+/)[0] || 'amiga';
+}
+
 export default function HomeScreen() {
+  const { profile } = useAuth();
   const [overview, setOverview] = useState<ReviewOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -35,6 +43,12 @@ export default function HomeScreen() {
     }, [load])
   );
 
+  const displayName = useMemo(
+    () => getDisplayName(profile?.nickname || profile?.full_name),
+    [profile?.full_name, profile?.nickname]
+  );
+
+  const avatarLabel = useMemo(() => displayName.charAt(0).toUpperCase(), [displayName]);
   const recommendedBook = useMemo(() => getRecommendedBook(overview), [overview]);
   const heroCopy = useMemo(
     () => getHomeHeroText(overview, recommendedBook),
@@ -44,12 +58,16 @@ export default function HomeScreen() {
   return (
     <AppScreen>
       <AppHeader
-        title="Hola, Mia"
+        title={`Hola, ${displayName}`}
         subtitle="Tu espacio para estudiar y reforzar lo importante."
         rightSlot={
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={18} color={colors.text} />
-          </View>
+          profile?.avatar_url ? (
+            <Image source={{ uri: profile.avatar_url }} style={styles.avatarImage} contentFit="cover" />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{avatarLabel}</Text>
+            </View>
+          )
         }
       />
 
@@ -214,6 +232,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  avatarImage: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  avatarText: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '800',
+  },
   examCard: {
     backgroundColor: colors.coral,
     borderRadius: radius.xl,
@@ -258,18 +288,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.skySoft,
     borderRadius: radius.xl,
     padding: 18,
-    marginBottom: 18,
+    marginBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   studyAllIconWrap: {
     width: 46,
     height: 46,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.65)',
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -298,39 +326,41 @@ const styles = StyleSheet.create({
   quickGrid: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 18,
+    marginBottom: 20,
   },
   quickItem: {
     flex: 1,
-    borderRadius: radius.lg,
-    padding: 14,
+    borderRadius: radius.xl,
+    padding: 16,
+    minHeight: 108,
+    justifyContent: 'space-between',
   },
   quickIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    width: 36,
+    height: 36,
+    borderRadius: 14,
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
   },
   quickLabel: {
+    marginTop: 14,
     color: colors.text,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '800',
   },
   loaderWrap: {
-    paddingTop: 24,
+    paddingVertical: 28,
     alignItems: 'center',
   },
   list: {
-    gap: 12,
+    gap: 10,
     marginBottom: 18,
   },
   emptyCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: 16,
+    borderRadius: radius.xl,
+    padding: 18,
     borderWidth: 1,
     borderColor: colors.border,
   },
