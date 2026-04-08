@@ -9,6 +9,7 @@ type AppIntroProps = {
 export function AppIntro({ onFinish }: AppIntroProps) {
   const opacity = useRef(new Animated.Value(1)).current;
   const finishedRef = useRef(false);
+//const end= useRef(true);
 
   const finish = () => {
     if (finishedRef.current) return;
